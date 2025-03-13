@@ -1,15 +1,19 @@
 const User = require("../models/user");
+const {
+  CAST_ERROR,
+  DOCUMENT_NOT_FOUND_ERROR,
+  DEFAULT__SERVER_ERROR,
+} = require("../utils/errors");
 
 const getUsers = (req, res) => {
   User.find({})
     .then((users) => {
-      //res.send(users)
-      //throw Error("AHH!!!!");
       res.status(200).send(users);
     })
     .catch((err) => {
-      console.error(err);
-      return res.status(500).send({ message: err.message });
+      res
+        .status(DEFAULT__SERVER_ERROR)
+        .send({ message: "Finding User Failed", err });
     });
 };
 
@@ -19,11 +23,11 @@ const createUser = (req, res) => {
   User.create({ name, avatar })
     .then((user) => res.status(201).send(user))
     .catch((err) => {
-      console.error(err);
       if (err.name === "ValidationError") {
-        return res.status(400).send({ message: err.message });
+        res.status(CAST_ERROR).send({ message: "Invalid Data", err });
+      } else {
+        res.status(500).send({ message: err.message });
       }
-      return res.status(500).send({ message: err.message });
     });
 };
 
@@ -33,13 +37,17 @@ const getUser = (req, res) => {
     .orFail()
     .then((user) => res.status(200).send(user))
     .catch((err) => {
-      console.error(err);
       if (err.name === "DocumentNotFoundError") {
-        console.error("SAY HELLO");
+        res
+          .status(DOCUMENT_NOT_FOUND_ERROR)
+          .send({ message: "Requested Item was not found", err });
+      } else if (err.name === "CastError") {
+        res.status(CAST_ERROR).send({ message: "Invalid Data Entered", err });
       } else {
-        console.error("CAST ERROR");
+        res
+          .status(DEFAULT__SERVER_ERROR)
+          .send({ message: "Finding User Failed", err });
       }
-      return res.status(500).send({ message: err.message });
     });
 };
 
