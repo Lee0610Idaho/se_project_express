@@ -39,7 +39,7 @@ const deleteItem = (req, res) => {
   const { itemId } = req.params;
   ClothingItem.findByIdAndDelete(itemId)
     .orFail()
-    .then((item) => res.status(204).send({ message: "Deleted Clothing Item" }))
+    .then((item) => res.status(200).send({ message: "Deleted Clothing Item" }))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
         res
