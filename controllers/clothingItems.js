@@ -20,14 +20,13 @@ const createItem = (req, res) => {
           .status(DEFAULT__SERVER_ERROR)
           .send({ message: "Error: cannot create clothing item" });
       }
-      f;
     });
 };
 
 const getItems = (req, res) => {
   ClothingItem.find({})
     .then((items) => res.status(200).send(items))
-    .catch((err) => {
+    .catch(() => {
       res.status(DEFAULT__SERVER_ERROR).send({ message: "Get Items Failed" });
     });
 };

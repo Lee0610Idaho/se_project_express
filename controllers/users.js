@@ -10,7 +10,7 @@ const getUsers = (req, res) => {
     .then((users) => {
       res.status(200).send(users);
     })
-    .catch((err) => {
+    .catch(() => {
       res
         .status(DEFAULT__SERVER_ERROR)
         .send({ message: "Finding User Failed" });
