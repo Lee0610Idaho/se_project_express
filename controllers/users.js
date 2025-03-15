@@ -13,7 +13,7 @@ const getUsers = (req, res) => {
     .catch((err) => {
       res
         .status(DEFAULT__SERVER_ERROR)
-        .send({ message: "Finding User Failed", err });
+        .send({ message: "Finding User Failed" });
     });
 };
 
@@ -24,9 +24,9 @@ const createUser = (req, res) => {
     .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === "ValidationError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data", err });
+        res.status(CAST_ERROR).send({ message: "Invalid Data" });
       } else {
-        res.status(500).send({ message: err.message });
+        res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
       }
     });
 };
@@ -40,13 +40,13 @@ const getUser = (req, res) => {
       if (err.name === "DocumentNotFoundError") {
         res
           .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested Item was not found", err });
+          .send({ message: "Requested Item was not found" });
       } else if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered", err });
+        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
       } else {
         res
           .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Finding User Failed", err });
+          .send({ message: "Finding User Failed" });
       }
     });
 };

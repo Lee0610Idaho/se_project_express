@@ -13,15 +13,14 @@ const createItem = (req, res) => {
       res.status(201).send({ data: item });
     })
     .catch((err) => {
-      if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data", err });
-      } else if (err.name === "ValidationError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data", err });
+      if (err.name === "ValidationError") {
+        res.status(CAST_ERROR).send({ message: "Invalid Data" });
       } else {
         res
           .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Error: cannot create clothing item", err });
+          .send({ message: "Error: cannot create clothing item" });
       }
+      f;
     });
 };
 
@@ -29,9 +28,7 @@ const getItems = (req, res) => {
   ClothingItem.find({})
     .then((items) => res.status(200).send(items))
     .catch((err) => {
-      res
-        .status(DEFAULT__SERVER_ERROR)
-        .send({ message: "Get Items Failed", err });
+      res.status(DEFAULT__SERVER_ERROR).send({ message: "Get Items Failed" });
     });
 };
 
@@ -44,13 +41,13 @@ const deleteItem = (req, res) => {
       if (err.name === "DocumentNotFoundError") {
         res
           .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested Item was not found", err });
+          .send({ message: "Requested Item was not found" });
       } else if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered", err });
+        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
       } else {
         res
           .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Delete Item Failed", err });
+          .send({ message: "Delete Item Failed" });
       }
     });
 };
@@ -67,13 +64,13 @@ const likeItem = (req, res) => {
       if (err.name === "DocumentNotFoundError") {
         res
           .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Item to be liked was not found", err });
+          .send({ message: "Item to be liked was not found" });
       } else if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered", err });
+        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
       } else {
         res
           .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Delete Item Failed", err });
+          .send({ message: "Delete Item Failed" });
       }
     });
 };
@@ -90,13 +87,13 @@ const dislikeItem = (req, res) => {
       if (err.name === "DocumentNotFoundError") {
         res
           .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Item to be liked was not found", err });
+          .send({ message: "Item to be liked was not found" });
       } else if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered", err });
+        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
       } else {
         res
           .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Delete Item Failed", err });
+          .send({ message: "Delete Item Failed" });
       }
     });
 };
