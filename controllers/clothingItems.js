@@ -3,6 +3,7 @@ const {
   CAST_ERROR,
   DOCUMENT_NOT_FOUND_ERROR,
   DEFAULT__SERVER_ERROR,
+  FORBIDDEN_ERROR,
 } = require("../utils/errors");
 
 const createItem = (req, res) => {
@@ -33,9 +34,18 @@ const getItems = (req, res) => {
 
 const deleteItem = (req, res) => {
   const { itemId } = req.params;
-  ClothingItem.findByIdAndDelete(itemId)
+  ClothingItem.findById(itemId)
     .orFail()
-    .then(() => res.status(200).send({ message: "Deleted Clothing Item" }))
+    .then((item) => {
+      if (String(item.owner) !== req.user._id) {
+        res
+          .status(FORBIDDEN_ERROR)
+          .send({ message: "Cannot delete item that is not yours" });
+      }
+      return item
+        .deleteOne()
+        .then(() => res.send({ message: "Item deleted." }));
+    })
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
         res

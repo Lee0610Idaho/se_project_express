@@ -1,9 +1,17 @@
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
 const User = require("../models/user");
 const {
   CAST_ERROR,
   DOCUMENT_NOT_FOUND_ERROR,
   DEFAULT__SERVER_ERROR,
+  CONFLICT_ERROR,
+  UNAUTHORIZED_ERROR,
+  FORBIDDEN_ERROR,
 } = require("../utils/errors");
+
+const { JWT_SECRET } = require("../utils/config");
 
 const getUsers = (req, res) => {
   User.find({})
@@ -18,21 +26,76 @@ const getUsers = (req, res) => {
 };
 
 const createUser = (req, res) => {
-  const { name, avatar } = req.body;
+  const { name, avatar, email, password } = req.body;
 
-  User.create({ name, avatar })
-    .then((user) => res.status(201).send(user))
+  User.findOne({ email }).then((user) => {
+    if (user) {
+      next(new ConflictError("This email is already being used."));
+    }
+
+    return bcrypt
+      .hash(password, 10)
+      .then((hash) =>
+        User.create({
+          name,
+          avatar,
+          email,
+          password: hash,
+        })
+      )
+      .then((newUser) =>
+        res.status(201).send({
+          _id: newUser._id,
+          email: newUser.email,
+          name: newUser.name,
+          avatar: newUser.avatar,
+        })
+      )
+      .catch((err) => {
+        console.error(err);
+        if (err.name === "ValidationError") {
+          res.status(CAST_ERROR).send({ message: "Invalid Data" });
+        } else if (err.code === 11000) {
+          res.status(CONFLICT_ERROR).send({ message: "Email Already Taken" });
+        } else {
+          res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
+        }
+      });
+  });
+};
+
+//Log in a User
+const logInUser = (req, res) => {
+  const { email, password } = req.body;
+
+  //Ensure email and passwords are filled
+  if (!email || !password) {
+    res
+      .status(CAST_ERROR)
+      .send({ message: "Both Email and Password fields are necessary" });
+  }
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      res.send({ token });
+    })
     .catch((err) => {
-      if (err.name === "ValidationError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data" });
+      console.error(err);
+      if (err.message === "Incorrect email or password") {
+        res.status(UNAUTHORIZED_ERROR).send({ message: "Unauthorized" });
       } else {
         res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
       }
     });
 };
 
-const getUser = (req, res) => {
-  const { userId } = req.params;
+const getCurrentUser = (req, res) => {
+  const userId = req.user._id;
+
   User.findById(userId)
     .orFail()
     .then((user) => res.status(200).send(user))
@@ -51,4 +114,29 @@ const getUser = (req, res) => {
     });
 };
 
-module.exports = { getUsers, createUser, getUser };
+const updateUser = (req, res) => {
+  const userId = req.user._id;
+  const { name, avatar } = req.body;
+
+  User.findByIdAndUpdate(
+    userId,
+    { name, avatar },
+    { new: true, runValidators: true }
+  )
+    .orFail()
+    .then((user) => res.status(201).send(user))
+    .catch((err) => {
+      console.error(err);
+      if (err.name === "ValidationError" || err.name === "CastError") {
+        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
+      } else if (err.name === "DocumentNotFoundError") {
+        res
+          .status(DOCUMENT_NOT_FOUND_ERROR)
+          .send({ message: "Requested Item was not found" });
+      } else {
+        res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
+      }
+    });
+};
+
+module.exports = { getUsers, createUser, getCurrentUser, logInUser };
