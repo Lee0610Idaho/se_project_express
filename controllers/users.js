@@ -28,10 +28,6 @@ const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
   User.findOne({ email }).then((user) => {
-    //Checking for required email
-    // if (user.email === undefined) {
-    //   return res.status(CAST_ERROR).send({ message: "Email field is empty" });
-    // }
     if (user) {
       return res
         .status(CONFLICT_ERROR)
@@ -60,15 +56,13 @@ const createUser = (req, res) => {
         // console.error(err);
         if (err.name === "ValidationError") {
           return res.status(CAST_ERROR).send({ message: "Invalid Data" });
-        } else if (err.code === 11000) {
+        }
+        if (err.code === 11000) {
           return res
             .status(CONFLICT_ERROR)
             .send({ message: "Email Already Taken" });
-        } else {
-          return res
-            .status(DEFAULT__SERVER_ERROR)
-            .send({ message: err.message });
         }
+        return res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
       });
   });
 };
