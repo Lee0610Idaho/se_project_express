@@ -8,7 +8,6 @@ const {
   DEFAULT__SERVER_ERROR,
   CONFLICT_ERROR,
   UNAUTHORIZED_ERROR,
-  FORBIDDEN_ERROR,
 } = require("../utils/errors");
 
 const { JWT_SECRET } = require("../utils/config");
@@ -29,8 +28,14 @@ const createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
 
   User.findOne({ email }).then((user) => {
+    //Checking for required email
+    // if (user.email === undefined) {
+    //   return res.status(CAST_ERROR).send({ message: "Email field is empty" });
+    // }
     if (user) {
-      next(new ConflictError("This email is already being used."));
+      return res
+        .status(CONFLICT_ERROR)
+        .send({ message: "Email already being used" });
     }
 
     return bcrypt
@@ -52,25 +57,27 @@ const createUser = (req, res) => {
         })
       )
       .catch((err) => {
-        console.error(err);
+        // console.error(err);
         if (err.name === "ValidationError") {
-          res.status(CAST_ERROR).send({ message: "Invalid Data" });
+          return res.status(CAST_ERROR).send({ message: "Invalid Data" });
         } else if (err.code === 11000) {
-          res.status(CONFLICT_ERROR).send({ message: "Email Already Taken" });
+          return res
+            .status(CONFLICT_ERROR)
+            .send({ message: "Email Already Taken" });
         } else {
-          res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
+          return res
+            .status(DEFAULT__SERVER_ERROR)
+            .send({ message: err.message });
         }
       });
   });
 };
 
-//Log in a User
 const logInUser = (req, res) => {
   const { email, password } = req.body;
 
-  //Ensure email and passwords are filled
   if (!email || !password) {
-    res
+    return res
       .status(CAST_ERROR)
       .send({ message: "Both Email and Password fields are necessary" });
   }
@@ -84,11 +91,11 @@ const logInUser = (req, res) => {
       res.send({ token });
     })
     .catch((err) => {
-      console.error(err);
+      // console.error(err);
       if (err.message === "Incorrect email or password") {
-        res.status(UNAUTHORIZED_ERROR).send({ message: "Unauthorized" });
+        return res.status(UNAUTHORIZED_ERROR).send({ message: "Unauthorized" });
       } else {
-        res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
+        return res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
       }
     });
 };
@@ -124,9 +131,9 @@ const updateUser = (req, res) => {
     { new: true, runValidators: true }
   )
     .orFail()
-    .then((user) => res.status(201).send(user))
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
-      console.error(err);
+      // console.error(err);
       if (err.name === "ValidationError" || err.name === "CastError") {
         res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
       } else if (err.name === "DocumentNotFoundError") {
@@ -139,4 +146,10 @@ const updateUser = (req, res) => {
     });
 };
 
-module.exports = { getUsers, createUser, getCurrentUser, logInUser };
+module.exports = {
+  getUsers,
+  createUser,
+  getCurrentUser,
+  logInUser,
+  updateUser,
+};
