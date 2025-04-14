@@ -13,17 +13,9 @@ mongoose
   })
   .catch();
 
-// app.use((req, res, next) => {
-//   req.user = {
-//     _id: "67d335d24a70e482a275e923",
-//   };
-//   next();
-// });
-
 app.use(express.json());
-app.use(routes);
-
 app.use(cors());
+app.use(routes);
 
 app.listen(PORT, () => {
   // console.log(`Listening on port ${PORT}`);

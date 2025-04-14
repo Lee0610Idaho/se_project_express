@@ -38,7 +38,7 @@ const deleteItem = (req, res) => {
     .orFail()
     .then((item) => {
       if (String(item.owner) !== req.user._id) {
-        res
+        return res
           .status(FORBIDDEN_ERROR)
           .send({ message: "Cannot delete item that is not yours" });
       }
