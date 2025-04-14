@@ -48,6 +48,9 @@ const createUser = (req, res) => {
           if (err.code === 11000) {
             res.status(CONFLICT_ERROR).send({ message: "Email Already Taken" });
           }
+          return res
+            .status(DEFAULT__SERVER_ERROR)
+            .send({ message: err.message });
         });
     })
     .catch(() => {
