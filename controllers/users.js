@@ -2,25 +2,28 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/user");
-const {
-  CAST_ERROR,
-  DOCUMENT_NOT_FOUND_ERROR,
-  DEFAULT__SERVER_ERROR,
-  CONFLICT_ERROR,
-  UNAUTHORIZED_ERROR,
-} = require("../utils/errors");
+// const {
+//   CAST_ERROR,
+//   DOCUMENT_NOT_FOUND_ERROR,
+//   DEFAULT__SERVER_ERROR,
+//   CONFLICT_ERROR,
+//   UNAUTHORIZED_ERROR,
+// } = require("../utils/errors");
+
+const BadRequestError = require("../errors/bad-request-error");
+const UnauthorizedError = require("../errors/unauthorized-error");
+const NotFoundError = require("../errors/not-found-err");
+const ConflictError = require("../errors/conflict-error");
 
 const { JWT_SECRET } = require("../utils/config");
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
 
   User.findOne({ email })
     .then((user) => {
       if (user) {
-        return res
-          .status(CONFLICT_ERROR)
-          .send({ message: "Email already being used" });
+        throw new BadRequestError("Email already being used.");
       }
 
       return bcrypt
@@ -43,14 +46,12 @@ const createUser = (req, res) => {
         )
         .catch((err) => {
           if (err.name === "ValidationError") {
-            res.status(CAST_ERROR).send({ message: "Invalid Data" });
+            next(new BadRequestError("Invalid Data"));
           }
           if (err.code === 11000) {
-            res.status(CONFLICT_ERROR).send({ message: "Email Already Taken" });
+            next(new ConflictError("Email already exists."));
           }
-          return res
-            .status(DEFAULT__SERVER_ERROR)
-            .send({ message: err.message });
+          next(err);
         });
     })
     .catch(() => {
@@ -60,13 +61,11 @@ const createUser = (req, res) => {
     });
 };
 
-const logInUser = (req, res) => {
+const logInUser = (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(CAST_ERROR)
-      .send({ message: "Both Email and Password fields are necessary" });
+    throw new BadRequestError("Both Email and Password fields are necessary");
   }
 
   return User.findUserByCredentials(email, password)
@@ -78,15 +77,16 @@ const logInUser = (req, res) => {
       res.send({ token });
     })
     .catch((err) => {
-      // console.error(err);
+      console.error(err);
       if (err.message === "Incorrect email or password") {
-        return res.status(UNAUTHORIZED_ERROR).send({ message: "Unauthorized" });
+        next(new UnauthorizedError("email or password incorrect"));
+      } else {
+        next(err);
       }
-      return res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
     });
 };
 
-const getCurrentUser = (req, res) => {
+const getCurrentUser = (req, res, next) => {
   const userId = req.user._id;
 
   User.findById(userId)
@@ -94,20 +94,16 @@ const getCurrentUser = (req, res) => {
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested Item was not found" });
+        throw new NotFoundError("Requested Item was not found");
       } else if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
+        throw new BadRequestError("Invalid Data Entered");
       } else {
-        res
-          .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Finding User Failed" });
+        next(err);
       }
     });
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const userId = req.user._id;
   const { name, avatar } = req.body;
 
@@ -121,13 +117,11 @@ const updateUser = (req, res) => {
     .catch((err) => {
       // console.error(err);
       if (err.name === "ValidationError" || err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
+        throw new BadRequestError("Invalid Data Entered");
       } else if (err.name === "DocumentNotFoundError") {
-        res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested Item was not found" });
+        throw new NotFoundError("Requested User not found");
       } else {
-        res.status(DEFAULT__SERVER_ERROR).send({ message: err.message });
+        next(err);
       }
     });
 };

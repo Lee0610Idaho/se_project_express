@@ -1,12 +1,15 @@
 const ClothingItem = require("../models/clothingItem");
-const {
-  CAST_ERROR,
-  DOCUMENT_NOT_FOUND_ERROR,
-  DEFAULT__SERVER_ERROR,
-  FORBIDDEN_ERROR,
-} = require("../utils/errors");
+// const {
+//   CAST_ERROR,
+//   DOCUMENT_NOT_FOUND_ERROR,
+//   DEFAULT__SERVER_ERROR,
+//   FORBIDDEN_ERROR,
+// } = require("../utils/errors");
+const BadRequestError = require("../errors/bad-request-error");
+const ForbiddenError = require("../errors/forbidden-error");
+const NotFoundError = require("../errors/not-found-err");
 
-const createItem = (req, res) => {
+const createItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
 
   ClothingItem.create({ name, weather, imageUrl, owner: req.user._id })
@@ -15,32 +18,28 @@ const createItem = (req, res) => {
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data" });
+        next(new BadRequestError("The id string is in an invalid format"));
       } else {
-        res
-          .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Error: cannot create clothing item" });
+        next(err);
       }
     });
 };
 
-const getItems = (req, res) => {
+const getItems = (req, res, next) => {
   ClothingItem.find({})
     .then((items) => res.status(200).send(items))
-    .catch(() => {
-      res.status(DEFAULT__SERVER_ERROR).send({ message: "Get Items Failed" });
+    .catch((err) => {
+      next(err);
     });
 };
 
-const deleteItem = (req, res) => {
+const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
   ClothingItem.findById(itemId)
     .orFail()
     .then((item) => {
       if (String(item.owner) !== req.user._id) {
-        return res
-          .status(FORBIDDEN_ERROR)
-          .send({ message: "Cannot delete item that is not yours" });
+        throw new ForbiddenError("delete item forbidden");
       }
       return item
         .deleteOne()
@@ -48,20 +47,16 @@ const deleteItem = (req, res) => {
     })
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Requested Item was not found" });
+        next(new NotFoundError("item not found"));
       } else if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
+        next(new BadRequestError("item is in invalid format"));
       } else {
-        res
-          .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Delete Item Failed" });
+        next(err);
       }
     });
 };
 
-const likeItem = (req, res) => {
+const likeItem = (req, res, next) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
     { $addToSet: { likes: req.user._id } },
@@ -71,20 +66,16 @@ const likeItem = (req, res) => {
     .then((item) => res.status(200).send({ data: item }))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Item to be liked was not found" });
+        next(new NotFoundError("item not found"));
       } else if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
+        next(new BadRequestError("item is in invalid format"));
       } else {
-        res
-          .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Delete Item Failed" });
+        next(err);
       }
     });
 };
 
-const dislikeItem = (req, res) => {
+const dislikeItem = (req, res, next) => {
   ClothingItem.findByIdAndUpdate(
     req.params.itemId,
     { $pull: { likes: req.user._id } },
@@ -94,15 +85,11 @@ const dislikeItem = (req, res) => {
     .then((item) => res.status(200).send({ data: item }))
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        res
-          .status(DOCUMENT_NOT_FOUND_ERROR)
-          .send({ message: "Item to be liked was not found" });
+        next(new NotFoundError("item not found"));
       } else if (err.name === "CastError") {
-        res.status(CAST_ERROR).send({ message: "Invalid Data Entered" });
+        next(new BadRequestError("item is in invalid format"));
       } else {
-        res
-          .status(DEFAULT__SERVER_ERROR)
-          .send({ message: "Delete Item Failed" });
+        next(err);
       }
     });
 };
