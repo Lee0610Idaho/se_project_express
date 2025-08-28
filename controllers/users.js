@@ -12,7 +12,7 @@ const User = require("../models/user");
 
 const BadRequestError = require("../errors/bad-request-error");
 const UnauthorizedError = require("../errors/unauthorized-error");
-const NotFoundError = require("../errors/not-found-err");
+const NotFoundError = require("../errors/not-found-error");
 const ConflictError = require("../errors/conflict-error");
 
 const { JWT_SECRET } = require("../utils/config");
