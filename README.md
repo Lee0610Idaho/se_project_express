@@ -1,5 +1,13 @@
 # WTWR (What to Wear?): Back End
 The back-end project is focused on creating a server for the WTWR application. It will be able to work with databases, have security and testing, and deploy web applications on a remote machine. The eventual goal is to create a server with an API and user authorization to interact with the What to Wear webpage.
+
+## Front End Repo
+https://github.com/Lee0610Idaho/se_project_react
+
+## Project Deployed
+URL: https://www.wtwrtt.jumpingcrab.com/
+
+
 ## Running the Project
 `npm run start` — to launch the server 
 
