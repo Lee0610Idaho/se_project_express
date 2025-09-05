@@ -1,10 +1,5 @@
 const ClothingItem = require("../models/clothingItem");
-// const {
-//   CAST_ERROR,
-//   DOCUMENT_NOT_FOUND_ERROR,
-//   DEFAULT__SERVER_ERROR,
-//   FORBIDDEN_ERROR,
-// } = require("../utils/errors");
+
 const BadRequestError = require("../errors/bad-request-error");
 const ForbiddenError = require("../errors/forbidden-error");
 const NotFoundError = require("../errors/not-found-error");
