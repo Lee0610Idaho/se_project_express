@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
 
   // check if the header exists and starts with "Bearer "
   if (!authorization || !authorization.startsWith("Bearer ")) {
-    throw new UnauthorizedError("Unauthorized");
+    next(new UnauthorizedError("Unauthorized"));
   }
 
   // get the token
@@ -20,7 +20,7 @@ module.exports = (req, res, next) => {
   try {
     payload = jwt.verify(token, JWT_SECRET);
   } catch (err) {
-    throw new UnauthorizedError("Unauthorized");
+    next(new UnauthorizedError("Unauthorized"));
   }
 
   req.user = payload;
